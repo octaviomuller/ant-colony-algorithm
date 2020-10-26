@@ -3,6 +3,14 @@ import random
 from classes.city import City
 from classes.ant import Ant
 
+ant_count = 10
+iterations = 100
+alpha = 0.1
+beta = 2
+initial_pheromone = 0.1
+pheromone_constant = 10
+pheromone_evaporation = 0.1
+
 
 def main():
     cities = []
@@ -14,8 +22,13 @@ def main():
     distances = distance_matrix(cities)
     for index, city in enumerate(cities):
         city.distance = distances[index]
-        city.pheromone = [1 / (len(cities) * len(cities)) for i in range(len(cities))]
-    aco(100, 100, cities, 0.9, 1.0, 2, 1.0)
+        city.tau = [initial_pheromone for i in range(len(cities))]
+        for i in city.distance:
+            if i != 0:
+                city.eta.append(1/i)
+            else:
+                city.eta.append(0)
+    aco(cities)
 
 
 def distance_matrix(cities):
@@ -32,17 +45,18 @@ def distance_between(city1, city2):
     return math.sqrt((city1.x - city2.x) ** 2 + (city1.y - city2.y) ** 2)
 
 
-def aco(iterations, ant_count, cities, pheromone_intensity, alpha, beta, rho):
+def aco(cities):
     best_cost = 0
     best_path = []
+    allowed = [i + 1 for i in range(len(cities))]
+    ants = [Ant(cities[random.randint(0, len(cities) - 1)].id, allowed.copy())
+            for i in range(ant_count)]
 
     for i in range(iterations):
-        ants = [Ant(cities[random.randint(0, len(cities) - 1)].id,
-                    [i + 1 for i in range(len(cities))], alpha, beta) for i in range(ant_count)]
         for index, ant in enumerate(ants):
             cost = 0
             for moving_count in range(len(ant.allowed) + 1):
-                ant.move(cities)
+                ant.move(cities, alpha, beta)
             if index == 0:
                 best_cost = ant.cost
                 best_path = ant.path
@@ -50,7 +64,12 @@ def aco(iterations, ant_count, cities, pheromone_intensity, alpha, beta, rho):
                 if ant.cost < best_cost:
                     best_cost = ant.cost
                     best_path = ant.path
-        # Aqui entra o algoritmo para atualizar os feromônios
+            ant.reset(allowed.copy())
+
+        for i in range(len(best_path) - 1):
+            cities[i].update_pheromone(i + 1,
+                                       pheromone_constant, best_cost, pheromone_evaporation)
+
     print('cost: ', best_cost)
     print('path: ', best_path)
 
