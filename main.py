@@ -1,20 +1,21 @@
 import math
 import random
+import matplotlib.pyplot as plt
 from classes.city import City
 from classes.ant import Ant
 
-ant_count = 10
-iterations = 100
+ant_count = 51
+iterations = 300
 alpha = 0.1
 beta = 2
-initial_pheromone = 0.1
+initial_pheromone = 0.9
 pheromone_constant = 10
 pheromone_evaporation = 0.1
 
 
 def main():
     cities = []
-    with open('./tsp/att48.txt', 'r') as f:
+    with open('./tsp/eil51.txt', 'r') as f:
         for line in f.readlines():
             city = line.split(' ')
             cities.append(
@@ -67,12 +68,18 @@ def aco(cities):
             ant.reset(allowed.copy())
 
         for i in range(len(best_path) - 1):
-            cities[i].update_pheromone(i + 1,
-                                       pheromone_constant, best_cost, pheromone_evaporation)
+            cities[best_path[i] - 1].update_pheromone(i + 1,
+                                                      pheromone_constant, best_cost, pheromone_evaporation)
 
     print('cost: ', best_cost)
     print('path: ', best_path)
-
+    
+    x = []
+    y = []
+    for index in best_path:
+        x.append(cities[index -1].x)
+        y.append(cities[index -1].y)
+    plt.plot(x,y)
 
 if __name__ == '__main__':
     main()
